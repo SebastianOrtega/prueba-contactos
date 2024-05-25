@@ -1,11 +1,37 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
+import React, { useEffect, useState } from 'react';
+import { Image, StyleSheet, Platform, Button, Alert, View } from 'react-native';
+import * as Contacts from 'expo-contacts';
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
 export default function HomeScreen() {
+  const [hasPermission, setHasPermission] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Contacts.requestPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
+
+  const openContacts = async () => {
+    if (!hasPermission) {
+      Alert.alert('Permission Denied', 'You need to grant contacts permission to use this feature.');
+      return;
+    }
+
+    const { data } = await Contacts.getContactsAsync();
+    if (data.length > 0) {
+      Alert.alert('Contacts', `You have ${data.length} contacts`);
+      console.log(JSON.stringify(data, null, 4));
+
+    } else {
+      Alert.alert('Contacts', 'No contacts found');
+    }
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -46,6 +72,9 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
+      <ThemedView style={styles.buttonContainer}>
+        <Button title="Open Contacts" onPress={openContacts} />
+      </ThemedView>
     </ParallaxScrollView>
   );
 }
@@ -66,5 +95,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  buttonContainer: {
+    marginTop: 20,
+    paddingHorizontal: 16,
   },
 });
